@@ -16,16 +16,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    main.cpp \
-    main_window.cpp \
-    open_dir_pushbutton.cpp
+    src/main.cpp \
+    src/main_window.cpp \
+    src/open_dir_pushbutton.cpp
 
 HEADERS += \
-    main_window.h \
-    open_dir_pushbutton.h
+    src/main_window.h \
+    src/open_dir_pushbutton.h
 
 FORMS += \
-    main_window.ui
+    forms/main_window.ui
 
 RESOURCES += \
     Icons/open_dir.jpeg \

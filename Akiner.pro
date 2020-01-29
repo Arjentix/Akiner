@@ -28,9 +28,9 @@ FORMS += \
     forms/main_window.ui
 
 RESOURCES += \
-    Icons/open_dir.jpeg \
-    Icons/plus.png \
-    Icons/minus.png
+    icons/open_dir.jpeg \
+    icons/plus.png \
+    icons/minus.png
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

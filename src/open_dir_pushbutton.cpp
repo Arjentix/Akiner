@@ -7,7 +7,7 @@ OpenDirPushButton::OpenDirPushButton(QWidget* parent, QLineEdit* lineEdit)
     : QPushButton(parent)
     , _lineEdit(lineEdit)
 {
-    QPixmap pixmap(":/Icons/open_dir.jpeg");
+    QPixmap pixmap(":/icons/open_dir.jpeg");
     QIcon buttonIcon(pixmap);
     this->setIcon(buttonIcon);
     this->setIconSize(pixmap.rect().size());

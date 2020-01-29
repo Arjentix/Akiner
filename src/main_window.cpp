@@ -1,7 +1,5 @@
 #include "main_window.h"
 
-#include <iostream>
-
 #include "ui_main_window.h"
 #include "open_dir_pushbutton.h"
 
@@ -14,8 +12,6 @@ MainWindow::MainWindow(QWidget *parent)
     _setup_left();
     _setup_central();
     _setup_right();
-
-    std::cout << "Begin: " << _ui->centralVerticalLayout->count() << std::endl;
 }
 
 MainWindow::~MainWindow()
@@ -86,14 +82,14 @@ void MainWindow::_setup_central()
     _ui->centralHorizontalLayout->addWidget(_centralOpenDirButton);
 
     // Minus button
-    QPixmap minus_pixmap(":/Icons/minus.png");
+    QPixmap minus_pixmap(":/icons/minus.png");
     QIcon minusIcon(minus_pixmap);
     _ui->minusPushButton->setIcon(minusIcon);
     _ui->minusPushButton->setIconSize(minus_pixmap.rect().size());
     _ui->minusPushButton->setFixedSize(35, 35);
 
     // Plus button
-    QPixmap plus_pixmap(":/Icons/plus.png");
+    QPixmap plus_pixmap(":/icons/plus.png");
     QIcon plusIcon(plus_pixmap);
     _ui->plusPushButton->setIcon(plusIcon);
     _ui->plusPushButton->setIconSize(plus_pixmap.rect().size());

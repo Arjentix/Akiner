@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <future>
 
+namespace fs = std::filesystem;
+
 using std::vector;
 using std::unordered_set;
 using std::string;
@@ -15,7 +17,10 @@ using std::next;
 using std::advance;
 using std::invalid_argument;
 
-namespace fs = std::filesystem;
+struct FilePathHasher;
+struct FilePathComparator;
+
+using FileSet = unordered_set<string, FilePathHasher, FilePathComparator>;
 
 string cutFileExtension(const string& filePath)
 {
@@ -47,8 +52,6 @@ struct FilePathComparator
         return cutFilePath(cutFileExtension(lhs)) == cutFilePath(cutFileExtension(rhs));
     }
 };
-
-using FileSet = unordered_set<string, FilePathHasher, FilePathComparator>;
 
 FileSet getAllFiles(const string& directory)
 {

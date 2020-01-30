@@ -335,7 +335,7 @@
     <item>
      <layout class="QHBoxLayout" name="bottomHorizontalLayout">
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="runPushButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>30</horstretch>

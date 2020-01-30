@@ -24,6 +24,8 @@ private slots:
     void on_plusPushButton_clicked();
     void on_minusPushButton_clicked();
 
+    void on_runPushButton_clicked();
+
 private:
     Ui::MainWindow* _ui;
     OpenDirPushButton* _leftOpenDirButton;
@@ -33,5 +35,9 @@ private:
     void _setup_left();
     void _setup_central();
     void _setup_right();
+
+    bool _check_left();
+    bool _check_central();
+    bool _check_right();
 };
 #endif // MAINWINDOW_H

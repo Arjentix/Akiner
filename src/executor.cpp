@@ -13,6 +13,7 @@ using std::ifstream;
 using std::distance;
 using std::next;
 using std::advance;
+using std::invalid_argument;
 
 namespace fs = std::filesystem;
 
@@ -51,6 +52,9 @@ using FileSet = unordered_set<string, FilePathHasher, FilePathComparator>;
 
 FileSet getAllFiles(const string& directory)
 {
+    if (!fs::is_directory(directory)) {
+        throw invalid_argument(directory + " не является директорией");
+    }
     FileSet allFiles;
     for (const auto& entry : fs::directory_iterator(directory)) {
         allFiles.insert(entry.path());

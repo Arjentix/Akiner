@@ -96,6 +96,8 @@ void MainWindow::on_runPushButton_clicked()
 
     std::string sourceFolder = _ui->leftLineEdit->text().toStdString();
     std::string destFolder = _ui->rightLineEdit->text().toStdString();
+
+    try {
     switch (_ui->comboBox->currentIndex()) {
     case 0:
         Executor::removeFiles(sourceFolder, searchFolders);
@@ -111,6 +113,10 @@ void MainWindow::on_runPushButton_clicked()
     }
 
     QMessageBox::information(this, tr("Готово"), tr("Все файлы были обработаны"));
+    }
+    catch (std::invalid_argument& ex) {
+        QMessageBox::critical(this, tr("Ошибка"), tr(ex.what()));
+    }
 }
 
 void MainWindow::_setup_left()

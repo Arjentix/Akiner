@@ -20,10 +20,10 @@ public:
     ~MainWindow();
 
 private slots:
+    void helpAction_triggered();
     void on_comboBox_activated(int n);
     void on_plusPushButton_clicked();
     void on_minusPushButton_clicked();
-
     void on_runPushButton_clicked();
 
 private:
@@ -31,7 +31,9 @@ private:
     OpenDirPushButton* _leftOpenDirButton;
     OpenDirPushButton* _centralOpenDirButton;
     OpenDirPushButton* _rightOpenDirButton;
+    QAction* _helpAction;
 
+    void _setup_menu();
     void _setup_left();
     void _setup_central();
     void _setup_right();

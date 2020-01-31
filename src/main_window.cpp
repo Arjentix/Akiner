@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     _ui->setupUi(this);
 
+    _setup_menu();
     _setup_left();
     _setup_central();
     _setup_right();
@@ -21,6 +22,11 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete _ui;
+}
+
+void MainWindow::helpAction_triggered()
+{
+    QMessageBox::information(this, tr("Справка"), tr("Текст"));
 }
 
 void MainWindow::on_comboBox_activated(int n)
@@ -76,8 +82,6 @@ void MainWindow::on_minusPushButton_clicked()
     }
 }
 
-
-
 void MainWindow::on_runPushButton_clicked()
 {
     if (_check_left() && _check_central() && _check_right() != true) {
@@ -117,6 +121,13 @@ void MainWindow::on_runPushButton_clicked()
     catch (std::exception& ex) {
         QMessageBox::critical(this, tr("Ошибка"), tr(ex.what()));
     }
+}
+
+void MainWindow::_setup_menu()
+{
+    _helpAction = new QAction(tr("Справка"), this);
+    _ui->menubar->addAction(_helpAction);
+    connect(_helpAction, SIGNAL(triggered()), this, SLOT(helpAction_triggered()));
 }
 
 void MainWindow::_setup_left()

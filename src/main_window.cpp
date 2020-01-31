@@ -114,7 +114,7 @@ void MainWindow::on_runPushButton_clicked()
 
     QMessageBox::information(this, tr("Готово"), tr("Все файлы были обработаны"));
     }
-    catch (std::invalid_argument& ex) {
+    catch (std::exception& ex) {
         QMessageBox::critical(this, tr("Ошибка"), tr(ex.what()));
     }
 }

@@ -3,6 +3,16 @@
 #include <unordered_set>
 #include <filesystem>
 #include <future>
+#include <iostream>
+
+#ifdef __unix__
+#define PATH_DELIMITER '/'
+#endif
+
+#ifdef __WIN32__
+#define PATH_DELIMITER '\\';
+#endif
+
 
 namespace fs = std::filesystem;
 
@@ -29,14 +39,9 @@ string cutFileExtension(const string& filePath)
 
 string cutFilePath(const string& filePath)
 {
-    char pathDelimiter = '/';
-
-#ifdef __WIN32__
-    pathDelimiter = '\\';
-#endif
-
-    return filePath.substr(filePath.find_last_of(pathDelimiter));
+    return filePath.substr(filePath.find_last_of(PATH_DELIMITER) + 1);
 }
+
 struct FilePathHasher
 {
     size_t operator()(const string& filePath) const
@@ -58,6 +63,7 @@ FileSet getAllFiles(const string& directory)
     if (!fs::is_directory(directory)) {
         throw invalid_argument(directory + " не является директорией");
     }
+
     FileSet allFiles;
     for (const auto& entry : fs::directory_iterator(directory)) {
         allFiles.insert(entry.path());
@@ -89,13 +95,19 @@ unsigned int getThreadNum()
     return threadNum;
 }
 
-void Executor::removeFiles(
-    const string& sourceFolder,
-    const vector<string>& searchFolders
-)
+/**
+ * @brief runFunctionMultiThreaded
+ *
+ * Runs function in mutlithreaded way
+ *
+ * @param sourceFiles files to iterate for
+ *
+ * @param function function, lambda or function object to run. Should take two FileSet::const_iterator.
+ */
+
+template <typename Function>
+void runFunctionMultiThreaded(const FileSet& sourceFiles, Function&& function)
 {
-    FileSet sourceFiles = getAllFiles(sourceFolder);
-    FileSet filesToSearch = getAllFiles(searchFolders);
     unsigned int threadNum = getThreadNum();
     unsigned int filesToThread = sourceFiles.size() / threadNum;
 
@@ -109,19 +121,29 @@ void Executor::removeFiles(
             distance(it, sourceFiles.end()) > 2 * filesToThread ? next(it, filesToThread) : sourceFiles.end()
         );
         futures.push_back(
-            async(
-                [&filesToSearch] (FileSet::iterator begin, FileSet::iterator end) {
-                    for (; begin != end; ++begin) {
-                        if (filesToSearch.count(*begin)) {
-                            remove(filesToSearch.find(*begin)->c_str());
-                        }
-                    }
-                },
-                it,
-                last
-            )
+            async(function, it, last)
         );
     }
+}
+
+void Executor::removeFiles(
+    const string& sourceFolder,
+    const vector<string>& searchFolders
+)
+{
+    FileSet sourceFiles = getAllFiles(sourceFolder);
+    FileSet filesToSearch = getAllFiles(searchFolders);
+
+    runFunctionMultiThreaded(
+        sourceFiles,
+        [&filesToSearch] (FileSet::const_iterator begin, FileSet::const_iterator end) {
+            for (; begin != end; ++begin) {
+                if (filesToSearch.count(*begin)) {
+                    fs::remove(*filesToSearch.find(*begin));
+                }
+            }
+        }
+    );
 }
 
 void Executor::moveFiles(
@@ -130,6 +152,20 @@ void Executor::moveFiles(
     const std::string& destFolder
 )
 {
+    FileSet sourceFiles = getAllFiles(sourceFolder);
+    FileSet filesToSearch = getAllFiles(searchFolders);
+
+    runFunctionMultiThreaded(
+        sourceFiles,
+        [&filesToSearch, &destFolder] (FileSet::const_iterator begin, FileSet::const_iterator end) {
+            for (; begin != end; ++begin) {
+                if (filesToSearch.count(*begin)) {
+                    string fileName = *filesToSearch.find(*begin);
+                    fs::rename(fileName, destFolder + PATH_DELIMITER + cutFilePath(fileName));
+                }
+            }
+        }
+    );
 }
 
 void Executor::copyFiles(
@@ -138,4 +174,19 @@ void Executor::copyFiles(
     const std::string& destFolder
 )
 {
+    FileSet sourceFiles = getAllFiles(sourceFolder);
+    FileSet filesToSearch = getAllFiles(searchFolders);
+
+    runFunctionMultiThreaded(
+        sourceFiles,
+        [&filesToSearch, &destFolder] (FileSet::const_iterator begin, FileSet::const_iterator end) {
+            for (; begin != end; ++begin) {
+                if (filesToSearch.count(*begin)) {
+                    string fileName = *filesToSearch.find(*begin);
+                    std::cout << "Copying '" << fileName << "' to '" << destFolder + PATH_DELIMITER + cutFilePath(fileName) << std::endl;
+                    fs::copy_file(fileName, destFolder + PATH_DELIMITER + cutFilePath(fileName));
+                }
+            }
+        }
+    );
 }

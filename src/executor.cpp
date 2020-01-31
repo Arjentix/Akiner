@@ -13,7 +13,6 @@
 #define PATH_DELIMITER '\\';
 #endif
 
-
 namespace fs = std::filesystem;
 
 using std::vector;
@@ -27,104 +26,32 @@ using std::next;
 using std::advance;
 using std::invalid_argument;
 
-struct FilePathHasher;
-struct FilePathComparator;
-
-using FileSet = unordered_set<string, FilePathHasher, FilePathComparator>;
-
-string cutFileExtension(const string& filePath)
-{
-    return filePath.substr(0, filePath.find_last_of('.'));
-}
-
-string cutFilePath(const string& filePath)
-{
-    return filePath.substr(filePath.find_last_of(PATH_DELIMITER) + 1);
-}
+// Local structures and functions declaration
 
 struct FilePathHasher
 {
-    size_t operator()(const string& filePath) const
-    {
-        return std::hash<string>()(cutFilePath(cutFileExtension(filePath)));
-    }
+    size_t operator()(const string& filePath) const;
 };
 
 struct FilePathComparator
 {
-    bool operator()(const string& lhs, const string& rhs) const
-    {
-        return cutFilePath(cutFileExtension(lhs)) == cutFilePath(cutFileExtension(rhs));
-    }
+    bool operator()(const string& lhs, const string& rhs) const;
 };
 
-FileSet getAllFiles(const string& directory)
-{
-    if (!fs::is_directory(directory)) {
-        throw invalid_argument(directory + " не является директорией");
-    }
-
-    FileSet allFiles;
-    for (const auto& entry : fs::directory_iterator(directory)) {
-        allFiles.insert(entry.path());
-    }
-
-    return allFiles;
-}
-
-FileSet getAllFiles(const vector<string>& searchFolders)
-{
-    FileSet allFiles;
-    for (const string& dir : searchFolders) {
-        FileSet currentDirectoryFiles = getAllFiles(dir);
-        allFiles.insert(currentDirectoryFiles.begin(), currentDirectoryFiles.end());
-    }
-
-    return allFiles;
-}
-
-unsigned int getThreadNum()
-{
-    unsigned int threadNum = std::thread::hardware_concurrency();
-
-    // If can't detect then use 4 threads
-    if (threadNum == 0) {
-        threadNum = 4;
-    }
-
-    return threadNum;
-}
-
-/**
- * @brief runFunctionMultiThreaded
- *
- * Runs function in mutlithreaded way
- *
- * @param sourceFiles files to iterate for
- *
- * @param function function, lambda or function object to run. Should take two FileSet::const_iterator.
- */
+using FileSet = unordered_set<string, FilePathHasher, FilePathComparator>;
 
 template <typename Function>
-void runFunctionMultiThreaded(const FileSet& sourceFiles, Function&& function)
-{
-    unsigned int threadNum = getThreadNum();
-    unsigned int filesToThread = sourceFiles.size() / threadNum;
+void runFunctionMultiThreaded(const FileSet& sourceFiles, Function&& function);
 
-    vector<future<void>> futures;
-    for (
-        auto it = sourceFiles.begin();
-        it != sourceFiles.end() && distance(it, sourceFiles.end()) > filesToThread;
-        advance(it, filesToThread)
-    ) {
-        auto last = (
-            distance(it, sourceFiles.end()) > 2 * filesToThread ? next(it, filesToThread) : sourceFiles.end()
-        );
-        futures.push_back(
-            async(function, it, last)
-        );
-    }
-}
+string cutFileExtension(const string& filePath);
+string cutFilePath(const string& filePath);
+
+FileSet getAllFiles(const string& directory);
+FileSet getAllFiles(const vector<string>& searchFolders);
+
+unsigned int getThreadNum();
+
+// Member methods definition
 
 void Executor::removeFiles(
     const string& sourceFolder,
@@ -190,3 +117,82 @@ void Executor::copyFiles(
         }
     );
 }
+
+string cutFileExtension(const string& filePath)
+{
+    return filePath.substr(0, filePath.find_last_of('.'));
+}
+
+string cutFilePath(const string& filePath)
+{
+    return filePath.substr(filePath.find_last_of(PATH_DELIMITER) + 1);
+}
+
+size_t FilePathHasher::operator()(const string& filePath) const
+{
+    return std::hash<string>()(cutFilePath(cutFileExtension(filePath)));
+}
+
+bool FilePathComparator::operator()(const string& lhs, const string& rhs) const
+{
+    return cutFilePath(cutFileExtension(lhs)) == cutFilePath(cutFileExtension(rhs));
+}
+
+FileSet getAllFiles(const string& directory)
+{
+    if (!fs::is_directory(directory)) {
+        throw invalid_argument(directory + " не является директорией");
+    }
+
+    FileSet allFiles;
+    for (const auto& entry : fs::directory_iterator(directory)) {
+        allFiles.insert(entry.path());
+    }
+
+    return allFiles;
+}
+
+FileSet getAllFiles(const vector<string>& searchFolders)
+{
+    FileSet allFiles;
+    for (const string& dir : searchFolders) {
+        FileSet currentDirectoryFiles = getAllFiles(dir);
+        allFiles.insert(currentDirectoryFiles.begin(), currentDirectoryFiles.end());
+    }
+
+    return allFiles;
+}
+
+unsigned int getThreadNum()
+{
+    unsigned int threadNum = std::thread::hardware_concurrency();
+
+    // If can't detect then use 4 threads
+    if (threadNum == 0) {
+        threadNum = 4;
+    }
+
+    return threadNum;
+}
+
+template <typename Function>
+void runFunctionMultiThreaded(const FileSet& sourceFiles, Function&& function)
+{
+    unsigned int threadNum = getThreadNum();
+    unsigned int filesToThread = sourceFiles.size() / threadNum;
+
+    vector<future<void>> futures;
+    for (
+        auto it = sourceFiles.begin();
+        it != sourceFiles.end() && distance(it, sourceFiles.end()) > filesToThread;
+        advance(it, filesToThread)
+    ) {
+        auto last = (
+            distance(it, sourceFiles.end()) > 2 * filesToThread ? next(it, filesToThread) : sourceFiles.end()
+        );
+        futures.push_back(
+            async(function, it, last)
+        );
+    }
+}
+

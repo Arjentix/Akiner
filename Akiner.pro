@@ -32,7 +32,8 @@ FORMS += \
 RESOURCES += \
     icons/open_dir.jpeg \
     icons/plus.png \
-    icons/minus.png
+    icons/minus.png \
+    icons/Akiner.ico
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

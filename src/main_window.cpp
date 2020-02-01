@@ -32,10 +32,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     _ui->setupUi(this);
 
-    _setup_menu();
-    _setup_left();
-    _setup_central();
-    _setup_right();
+    _setupIcon();
+    _setupMenu();
+    _setupLeft();
+    _setupCentral();
+    _setupRight();
 }
 
 MainWindow::~MainWindow()
@@ -121,7 +122,7 @@ void MainWindow::on_minusPushButton_clicked()
 
 void MainWindow::on_runPushButton_clicked()
 {
-    if (_check_left() && _check_central() && _check_right() != true) {
+    if (_checkLeft() && _checkCentral() && _checkRight() != true) {
         return;
     }
 
@@ -160,42 +161,49 @@ void MainWindow::on_runPushButton_clicked()
     }
 }
 
-void MainWindow::_setup_menu()
+void MainWindow::_setupIcon()
+{
+    QPixmap appPixmap(":/icons/Akiner.ico");
+    QIcon appIcon(appPixmap);
+    setWindowIcon(appIcon);
+}
+
+void MainWindow::_setupMenu()
 {
     _helpAction = new QAction(tr("Справка"), this);
     _ui->menubar->addAction(_helpAction);
     connect(_helpAction, SIGNAL(triggered()), this, SLOT(helpAction_triggered()));
 }
 
-void MainWindow::_setup_left()
+void MainWindow::_setupLeft()
 {
     // Left 'Open Directory' Button
     _leftOpenDirButton = new OpenDirPushButton(this, _ui->leftLineEdit);
     _ui->leftHorizontalLayout->addWidget(_leftOpenDirButton);
 }
 
-void MainWindow::_setup_central()
+void MainWindow::_setupCentral()
 {
     // Central 'Open Directory' Button
     _centralOpenDirButton = new OpenDirPushButton(this, _ui->centralLineEdit);
     _ui->centralHorizontalLayout->addWidget(_centralOpenDirButton);
 
     // Minus button
-    QPixmap minus_pixmap(":/icons/minus.png");
-    QIcon minusIcon(minus_pixmap);
+    QPixmap minusPixmap(":/icons/minus.png");
+    QIcon minusIcon(minusPixmap);
     _ui->minusPushButton->setIcon(minusIcon);
-    _ui->minusPushButton->setIconSize(minus_pixmap.rect().size());
+    _ui->minusPushButton->setIconSize(minusPixmap.rect().size());
     _ui->minusPushButton->setFixedSize(35, 35);
 
     // Plus button
-    QPixmap plus_pixmap(":/icons/plus.png");
-    QIcon plusIcon(plus_pixmap);
+    QPixmap plusPixmap(":/icons/plus.png");
+    QIcon plusIcon(plusPixmap);
     _ui->plusPushButton->setIcon(plusIcon);
-    _ui->plusPushButton->setIconSize(plus_pixmap.rect().size());
+    _ui->plusPushButton->setIconSize(plusPixmap.rect().size());
     _ui->plusPushButton->setFixedSize(35, 35);
 }
 
-void MainWindow::_setup_right()
+void MainWindow::_setupRight()
 {
     // Right LineEdit
     _ui->rightLineEdit->setEnabled(false);
@@ -206,7 +214,7 @@ void MainWindow::_setup_right()
     _ui->rightHorizontalLayout->addWidget(_rightOpenDirButton);
 }
 
-bool MainWindow::_check_left()
+bool MainWindow::_checkLeft()
 {
     if (_ui->leftLineEdit->text() == "") {
         QMessageBox::critical(this, tr("Ошибка"), tr("Не выбрана директория отобранных файлов!"));
@@ -216,7 +224,7 @@ bool MainWindow::_check_left()
     return true;
 }
 
-bool MainWindow::_check_central()
+bool MainWindow::_checkCentral()
 {
     bool centralLineEditsAreOk = true;
     for (int i = 2; i < _ui->centralVerticalLayout->count() - 2; ++i) {
@@ -234,7 +242,7 @@ bool MainWindow::_check_central()
     return true;
 }
 
-bool MainWindow::_check_right()
+bool MainWindow::_checkRight()
 {
     if (_ui->comboBox->currentIndex() == 1 && _ui->rightLineEdit->text() == "") {
         QMessageBox::critical(this, tr("Ошибка"), tr("Не выбрана директория для перемещения"));

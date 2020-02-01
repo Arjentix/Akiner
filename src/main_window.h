@@ -52,13 +52,14 @@ private:
     OpenDirPushButton* _rightOpenDirButton;
     QAction* _helpAction;
 
-    void _setup_menu();
-    void _setup_left();
-    void _setup_central();
-    void _setup_right();
+    void _setupIcon();
+    void _setupMenu();
+    void _setupLeft();
+    void _setupCentral();
+    void _setupRight();
 
-    bool _check_left();
-    bool _check_central();
-    bool _check_right();
+    bool _checkLeft();
+    bool _checkCentral();
+    bool _checkRight();
 };
 #endif // MAINWINDOW_H

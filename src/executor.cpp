@@ -199,6 +199,9 @@ void runFunctionMultiThreaded(const FileSet& sourceFiles, Function&& function)
 {
     unsigned int threadNum = getThreadNum();
     unsigned int filesToThread = sourceFiles.size() / threadNum;
+    if (filesToThread == 0) {
+        filesToThread = 1;
+    }
 
     vector<future<void>> futures;
     for (

@@ -20,19 +20,20 @@
 #include "executor.h"
 
 #include <unordered_set>
-#include <filesystem>
 #include <future>
-#include <iostream>
 
 #ifdef __unix__
+#include <filesystem>
 #define PATH_DELIMITER '/'
+namespace fs = std::filesystem;
 #endif
 
 #ifdef __WIN32__
-#define PATH_DELIMITER '\\';
+#include <experimental/filesystem>
+#define PATH_DELIMITER '\\'
+namespace fs = std::experimental::filesystem
 #endif
 
-namespace fs = std::filesystem;
 
 using std::vector;
 using std::unordered_set;
@@ -129,7 +130,6 @@ void Executor::copyFiles(
             for (; begin != end; ++begin) {
                 if (filesToSearch.count(*begin)) {
                     string fileName = *filesToSearch.find(*begin);
-                    std::cout << "Copying '" << fileName << "' to '" << destFolder + PATH_DELIMITER + cutFilePath(fileName) << std::endl;
                     fs::copy_file(fileName, destFolder + PATH_DELIMITER + cutFilePath(fileName));
                 }
             }
@@ -165,7 +165,7 @@ FileSet getAllFiles(const string& directory)
 
     FileSet allFiles;
     for (const auto& entry : fs::directory_iterator(directory)) {
-        allFiles.insert(entry.path());
+        allFiles.insert(entry.path().string());
     }
 
     return allFiles;

@@ -54,4 +54,4 @@ On *Linux* or *Mac OS* you can run it with:
 
 ## Windows
 
-To install it on *Windows* simply download an *exe* file from the [release page](https://github.com/Arjentix/Akiner/releases).
+To get it on *Windows* simply download a *.zip* file from the [release page](https://github.com/Arjentix/Akiner/releases), unpack it and create a shortcut for an *.exe* file.

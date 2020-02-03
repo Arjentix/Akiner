@@ -31,7 +31,7 @@ namespace fs = std::filesystem;
 #ifdef __WIN32__
 #include <experimental/filesystem>
 #define PATH_DELIMITER '\\'
-namespace fs = std::experimental::filesystem
+namespace fs = std::experimental::filesystem;
 #endif
 
 

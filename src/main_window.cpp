@@ -122,7 +122,8 @@ void MainWindow::on_minusPushButton_clicked()
 
 void MainWindow::on_runPushButton_clicked()
 {
-    if (_checkLeft() && _checkCentral() && _checkRight() != true) {
+    bool check = _checkLeft() && _checkCentral() && _checkRight();
+    if (check != true) {
         return;
     }
 

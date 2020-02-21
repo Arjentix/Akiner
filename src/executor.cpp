@@ -21,25 +21,24 @@
 
 #include <unordered_set>
 #include <future>
+#include <filesystem>
+#include <iostream>
 
 #ifdef __unix__
-#include <filesystem>
 #define PATH_DELIMITER '/'
-namespace fs = std::filesystem;
 #endif
 
 #ifdef __WIN32__
-#include <experimental/filesystem>
 #define PATH_DELIMITER '\\'
-namespace fs = std::experimental::filesystem;
 #endif
 
+namespace fs = std::filesystem;
 
 using std::vector;
 using std::unordered_set;
-using std::string;
 using std::future;
 using std::async;
+using std::wstring;
 using std::ifstream;
 using std::distance;
 using std::next;
@@ -50,32 +49,48 @@ using std::invalid_argument;
 
 struct FilePathHasher
 {
-    size_t operator()(const string& filePath) const;
+    size_t operator()(const fs::path& filePath) const;
 };
 
 struct FilePathComparator
 {
-    bool operator()(const string& lhs, const string& rhs) const;
+    bool operator()(const fs::path& lhs, const fs::path& rhs) const;
 };
 
-using FileSet = unordered_set<string, FilePathHasher, FilePathComparator>;
+using FileSet = unordered_set<fs::path, FilePathHasher, FilePathComparator>;
+
+/**
+ * pathToSysString() - converts std::filesystem::path to std::string or
+ * std::wstring, depending on OS. Used for better compatibility with Russian
+ * language.
+ */
+SysString pathToSysString(const fs::path& path)
+{
+#ifdef __unix__
+    return path.string();
+#endif
+
+#ifdef __WIN32__
+    return path.wstring();
+#endif
+}
 
 template <typename Function>
 void runFunctionMultiThreaded(const FileSet& sourceFiles, Function&& function);
 
-string cutFileExtension(const string& filePath);
-string cutFilePath(const string& filePath);
+fs::path cutFileExtension(const fs::path& filePath);
+fs::path cutFilePath(const fs::path& filePath);
 
-FileSet getAllFiles(const string& directory);
-FileSet getAllFiles(const vector<string>& searchFolders);
+FileSet getAllFiles(const fs::path& directory);
+FileSet getAllFiles(const vector<fs::path>& searchFolders);
 
 unsigned int getThreadNum();
 
 // Member methods definition
 
 void Executor::removeFiles(
-    const string& sourceFolder,
-    const vector<string>& searchFolders
+    const fs::path& sourceFolder,
+    const vector<fs::path>& searchFolders
 )
 {
     FileSet sourceFiles = getAllFiles(sourceFolder);
@@ -94,9 +109,9 @@ void Executor::removeFiles(
 }
 
 void Executor::moveFiles(
-    const std::string& sourceFolder,
-    const std::vector<std::string>&  searchFolders,
-    const std::string& destFolder
+    const fs::path& sourceFolder,
+    const std::vector<fs::path>&  searchFolders,
+    const fs::path& destFolder
 )
 {
     FileSet sourceFiles = getAllFiles(sourceFolder);
@@ -107,8 +122,13 @@ void Executor::moveFiles(
         [&filesToSearch, &destFolder] (FileSet::const_iterator begin, FileSet::const_iterator end) {
             for (; begin != end; ++begin) {
                 if (filesToSearch.count(*begin)) {
-                    string fileName = *filesToSearch.find(*begin);
-                    fs::rename(fileName, destFolder + PATH_DELIMITER + cutFilePath(fileName));
+                    fs::path fileName = *filesToSearch.find(*begin);
+                    fs::rename(
+                        fileName,
+                        pathToSysString(destFolder) +
+                        SysString(1, PATH_DELIMITER) +
+                        pathToSysString(cutFilePath(fileName))
+                    );
                 }
             }
         }
@@ -116,9 +136,9 @@ void Executor::moveFiles(
 }
 
 void Executor::copyFiles(
-    const std::string& sourceFolder,
-    const std::vector<std::string>&  searchFolders,
-    const std::string& destFolder
+    const fs::path& sourceFolder,
+    const std::vector<fs::path>&  searchFolders,
+    const fs::path& destFolder
 )
 {
     FileSet sourceFiles = getAllFiles(sourceFolder);
@@ -129,52 +149,64 @@ void Executor::copyFiles(
         [&filesToSearch, &destFolder] (FileSet::const_iterator begin, FileSet::const_iterator end) {
             for (; begin != end; ++begin) {
                 if (filesToSearch.count(*begin)) {
-                    string fileName = *filesToSearch.find(*begin);
-                    fs::copy_file(fileName, destFolder + PATH_DELIMITER + cutFilePath(fileName));
+                    fs::path fileName = *filesToSearch.find(*begin);
+                    fs::copy_file(
+                        fileName,
+                        pathToSysString(destFolder) +
+                        SysString(1, PATH_DELIMITER) +
+                        pathToSysString(cutFilePath(fileName))
+                    );
                 }
             }
         }
     );
 }
 
-string cutFileExtension(const string& filePath)
+fs::path cutFileExtension(const fs::path& filePath)
 {
-    return filePath.substr(0, filePath.find_last_of('.'));
+    SysString sysStr = pathToSysString(filePath);
+    return sysStr.substr(0, sysStr.find_last_of('.'));
 }
 
-string cutFilePath(const string& filePath)
+fs::path cutFilePath(const fs::path& filePath)
 {
-    return filePath.substr(filePath.find_last_of(PATH_DELIMITER) + 1);
+    SysString sysStr = pathToSysString(filePath);
+    return sysStr.substr(sysStr.find_last_of(PATH_DELIMITER) + 1);
 }
 
-size_t FilePathHasher::operator()(const string& filePath) const
+size_t FilePathHasher::operator()(const fs::path& filePath) const
 {
-    return std::hash<string>()(cutFilePath(cutFileExtension(filePath)));
+    return std::hash<SysString>()(pathToSysString(cutFilePath(cutFileExtension(filePath))));
 }
 
-bool FilePathComparator::operator()(const string& lhs, const string& rhs) const
+bool FilePathComparator::operator()(const fs::path& lhs, const fs::path& rhs) const
 {
     return cutFilePath(cutFileExtension(lhs)) == cutFilePath(cutFileExtension(rhs));
 }
 
-FileSet getAllFiles(const string& directory)
+FileSet getAllFiles(const fs::path& directory)
 {
-    if (!fs::is_directory(directory)) {
-        throw invalid_argument(directory + " не является директорией");
+    std::error_code err;
+    if (!fs::is_directory(directory, err)) {
+        throw invalid_argument(
+            directory.string() +
+            " не является директорией: " +
+            err.message()
+       );
     }
 
     FileSet allFiles;
     for (const auto& entry : fs::directory_iterator(directory)) {
-        allFiles.insert(entry.path().string());
+        allFiles.insert(entry.path());
     }
 
     return allFiles;
 }
 
-FileSet getAllFiles(const vector<string>& searchFolders)
+FileSet getAllFiles(const vector<fs::path>& searchFolders)
 {
     FileSet allFiles;
-    for (const string& dir : searchFolders) {
+    for (const fs::path& dir : searchFolders) {
         FileSet currentDirectoryFiles = getAllFiles(dir);
         allFiles.insert(currentDirectoryFiles.begin(), currentDirectoryFiles.end());
     }

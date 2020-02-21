@@ -21,10 +21,27 @@
 
 #include <QMessageBox>
 #include <vector>
+#include <iostream>
 
 #include "ui_main_window.h"
 #include "open_dir_pushbutton.h"
 #include "executor.h"
+
+/**
+ * QStringToSysString() - converts QString to std::string or std::wstring,
+ * depending on OS. Used for better compatibility with Russian language.
+ */
+
+SysString QStringToSysString(const QString& qstr)
+{
+#ifdef __unix__
+    return qstr.toStdString();
+#endif
+
+#ifdef __WIN32__
+    return qstr.toStdWString();
+#endif
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -128,34 +145,38 @@ void MainWindow::on_runPushButton_clicked()
     }
 
     QLayout* layout = _ui->centralVerticalLayout;
-    std::vector<std::string> searchFolders;
+    std::vector<std::filesystem::path> searchFolders;
     searchFolders.reserve(layout->count() - 4);
     for (int i = 2; i < layout->count() - 2; ++i) {
         QLineEdit* lineEdit = layoutItemToLineEdit(layout->itemAt(i)->layout()->itemAt(0));
         if (lineEdit != nullptr) {
-            searchFolders.push_back(lineEdit->text().toStdString());
+            std::cout << "Before getting wstring for vector" << std::endl;
+            searchFolders.push_back(QStringToSysString(lineEdit->text()));
+            std::cout << "After getting wstring for vector" << std::endl;
         }
     }
 
-    std::string sourceFolder = _ui->leftLineEdit->text().toStdString();
-    std::string destFolder = _ui->rightLineEdit->text().toStdString();
+    std::cout << "Before getting wstrings" << std::endl;
+    std::filesystem::path sourceFolder = QStringToSysString(_ui->leftLineEdit->text());
+    std::filesystem::path destFolder = QStringToSysString(_ui->rightLineEdit->text());
+    std::cout << "After getting wstrings" << std::endl;
 
     try {
-    switch (_ui->comboBox->currentIndex()) {
-    case 0:
-        Executor::removeFiles(sourceFolder, searchFolders);
-        break;
-    case 1:
-        Executor::moveFiles(sourceFolder, searchFolders, destFolder);
-        break;
-    case 2:
-        Executor::copyFiles(sourceFolder, searchFolders, destFolder);
-        break;
-    default:
-        break;
-    }
+        switch (_ui->comboBox->currentIndex()) {
+        case 0:
+            Executor::removeFiles(sourceFolder, searchFolders);
+            break;
+        case 1:
+            Executor::moveFiles(sourceFolder, searchFolders, destFolder);
+            break;
+        case 2:
+            Executor::copyFiles(sourceFolder, searchFolders, destFolder);
+            break;
+        default:
+            break;
+        }
 
-    QMessageBox::information(this, tr("Готово"), tr("Все файлы были обработаны"));
+        QMessageBox::information(this, tr("Готово"), tr("Все файлы были обработаны"));
     }
     catch (std::exception& ex) {
         QMessageBox::critical(this, tr("Ошибка"), tr(ex.what()));

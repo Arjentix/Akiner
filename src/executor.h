@@ -20,9 +20,23 @@
 #ifndef EXECUTOR_H
 #define EXECUTOR_H
 
+#include <string>
 #include <vector>
 #include <set>
-#include <string>
+#include <filesystem>
+
+/**
+ * SysString - system specific string needed to support files with Russian
+ * language in the name.
+ */
+
+#ifdef __unix__
+using SysString = std::string;
+#endif
+
+#ifdef __WIN32__
+using SysString = std::wstring;
+#endif
 
 /**
  * The Executor class executes commands with files.
@@ -32,20 +46,20 @@ class Executor
 {
 public:
     static void removeFiles(
-        const std::string& sourceFolder,
-        const std::vector<std::string>&  searchFolders
+        const std::filesystem::path& sourceFolder,
+        const std::vector<std::filesystem::path>&  searchFolders
     );
 
     static void moveFiles(
-        const std::string& sourceFolder,
-        const std::vector<std::string>&  searchFolders,
-        const std::string& destFolder
+        const std::filesystem::path& sourceFolder,
+        const std::vector<std::filesystem::path>& searchFolders,
+        const std::filesystem::path& destFolder
     );
 
     static void copyFiles(
-        const std::string& sourceFolder,
-        const std::vector<std::string>&  searchFolders,
-        const std::string& destFolder
+        const std::filesystem::path& sourceFolder,
+        const std::vector<std::filesystem::path>&  searchFolders,
+        const std::filesystem::path& destFolder
     );
 };
 

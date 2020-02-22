@@ -84,6 +84,8 @@ fs::path cutFilePath(const fs::path& filePath);
 FileSet getAllFiles(const fs::path& directory);
 FileSet getAllFiles(const vector<fs::path>& searchFolders);
 
+void assertIsDirectory(const fs::path& directory);
+
 unsigned int getThreadNum();
 
 // Member methods definition
@@ -116,6 +118,7 @@ void Executor::moveFiles(
 {
     FileSet sourceFiles = getAllFiles(sourceFolder);
     FileSet filesToSearch = getAllFiles(searchFolders);
+    assertIsDirectory(destFolder);
 
     runFunctionMultiThreaded(
         sourceFiles,
@@ -143,6 +146,7 @@ void Executor::copyFiles(
 {
     FileSet sourceFiles = getAllFiles(sourceFolder);
     FileSet filesToSearch = getAllFiles(searchFolders);
+    assertIsDirectory(destFolder);
 
     runFunctionMultiThreaded(
         sourceFiles,
@@ -186,14 +190,7 @@ bool FilePathComparator::operator()(const fs::path& lhs, const fs::path& rhs) co
 
 FileSet getAllFiles(const fs::path& directory)
 {
-    std::error_code err;
-    if (!fs::is_directory(directory, err)) {
-        throw invalid_argument(
-            directory.string() +
-            " не является директорией: " +
-            err.message()
-       );
-    }
+    assertIsDirectory(directory);
 
     FileSet allFiles;
     for (const auto& entry : fs::directory_iterator(directory)) {
@@ -212,6 +209,18 @@ FileSet getAllFiles(const vector<fs::path>& searchFolders)
     }
 
     return allFiles;
+}
+
+void assertIsDirectory(const fs::path& directory)
+{
+    std::error_code err;
+    if (!fs::is_directory(directory, err)) {
+        throw invalid_argument(
+            directory.string() +
+            " не является директорией: " +
+            err.message()
+       );
+    }
 }
 
 unsigned int getThreadNum()
